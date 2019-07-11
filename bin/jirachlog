@@ -38,7 +38,7 @@ jiraIssuesParents = dict()
 
 cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', gitRevisionRange], cwd=gitCwd, stdout=subprocess.PIPE)
 for line in cmd.stdout:
-    match = re.search(gitLogPattern, str(line.decode('ascii').rstrip()))
+    match = re.search(gitLogPattern, str(line.decode('utf-8').rstrip()))
     if match:
         matchedHash = match.group(1)
         matchedIssue = match.group(2)
