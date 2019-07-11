@@ -16,6 +16,10 @@ if (len(sys.argv) < 2):
 
 gitRevisionRange = sys.argv[1]
 
+gitCwd = os.getcwd()
+if len(sys.argv) > 2 and sys.argv[2]:
+    gitCwd = sys.argv[2]
+
 gitLogPattern = r"(.*)\s(DAZ-\d+):\s?(.*)"
 
 jira = JIRA(basic_auth=(jiraUsername, jiraPassword), options={'server': jiraServer})
@@ -32,7 +36,7 @@ gitHashLog = dict()
 # Jira issues parents pointing to childs
 jiraIssuesParents = dict()
 
-cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', gitRevisionRange], cwd=os.getcwd(), stdout=subprocess.PIPE)
+cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', gitRevisionRange], cwd=gitCwd, stdout=subprocess.PIPE)
 for line in cmd.stdout:
     match = re.search(gitLogPattern, str(line.decode('ascii').rstrip()))
     if match:
