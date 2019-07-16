@@ -16,13 +16,12 @@ git_hash_log = dict()
 # Jira issues parents pointing to childs
 jira_issues_parents = dict()
 
-def parse(jira_username, jira_password, jira_server, git_revision_range, git_cwd, git_log_pattern):
+def parse(config):
+    jira = JIRA(basic_auth=(config.jira_username, config.jira_password), options={'server': config.jira_server})
 
-    jira = JIRA(basic_auth=(jira_username, jira_password), options={'server': jira_server})
-
-    cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', git_revision_range], cwd=git_cwd, stdout=subprocess.PIPE)
+    cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', config.git_revision_range], cwd=config.git_cwd, stdout=subprocess.PIPE)
     for line in cmd.stdout:
-        match = re.search(git_log_pattern, str(line.decode('utf-8').rstrip()))
+        match = re.search(config.git_log_pattern, str(line.decode('utf-8').rstrip()))
         if match:
             marched_hash = match.group(1)
             matched_issue = match.group(2)

@@ -2,24 +2,11 @@
 
 import os
 import sys
+from jirachlog.config import Config
 from jirachlog import git
 
-jira_username = os.environ['JIRA_USERNAME']
-jira_password = os.environ['JIRA_PASSWORD']
-jira_server = os.environ['JIRA_SERVER']
+config = Config()
 
-if (len(sys.argv) < 2):
-    print("Usage: %s <revision-range>" % sys.argv[0])
-    sys.exit(1)
-
-git_revision_range = sys.argv[1]
-
-git_cwd = os.getcwd()
-if len(sys.argv) > 2 and sys.argv[2]:
-    git_cwd = sys.argv[2]
-
-git_log_pattern = r"(.*)\s(DAZ-\d+):\s?(.*)"
-
-git.parse(jira_username, jira_password, jira_server, git_revision_range, git_cwd, git_log_pattern)
+git.parse(config)
 
 git.print_issues()
