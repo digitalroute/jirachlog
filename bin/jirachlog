@@ -9,4 +9,4 @@ config = Config()
 
 git.parse(config)
 
-git.print_issues()
+git.print_issues(config)
