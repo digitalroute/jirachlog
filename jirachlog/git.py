@@ -4,6 +4,12 @@ import subprocess
 import re
 from jira import JIRA
 
+class IssueInfo:
+    def __init__(self, issue, summary, status):
+        self.issue = issue
+        self.summary = summary
+        self.status = status
+
 # A dictionary of jira issues -> array of git hashes
 jira_issues_git_hashes = dict()
 
@@ -36,31 +42,28 @@ def parse(config):
             if matched_issue not in jira_issues_summary:
                 issue = jira.issue(matched_issue)
                 if hasattr(issue, 'fields'):
-                    summary = issue.fields.summary
-                    jira_issues_summary[matched_issue] = summary
+                    jira_issues_summary[matched_issue] = IssueInfo(matched_issue, issue.fields.summary, issue.fields.status)
                     if hasattr(issue.fields, 'parent'):
                         parentIssue = jira.issue(issue.fields.parent)
                         if hasattr(parentIssue, 'fields'):
-                            summary = parentIssue.fields.summary
-                            jira_issues_summary[parentIssue.key] = summary
+                            jira_issues_summary[parentIssue.key] = IssueInfo(matched_issue, parentIssue.fields.summary, parentIssue.fields.status)
                             if parentIssue.key not in jira_issues_parents:
                                 jira_issues_parents[parentIssue.key] = []
                             jira_issues_parents[parentIssue.key].append(matched_issue)
                     else:
                         jira_issues_parents[matched_issue] = []
 
-
 def print_issue(issue):
-    summary = jira_issues_summary[issue]
-    print("* %s %s" % (issue, summary))
+    issue_info = jira_issues_summary[issue]
+    print("* %s (%s) %s" % (issue, issue_info.status, issue_info.summary))
     if issue in jira_issues_git_hashes:
         for hash in jira_issues_git_hashes[issue]:
             print("  * %s %s" % (hash, git_hash_log[hash]))
     return
 
 def print_sub_issue(issue):
-    summary = jira_issues_summary[issue]
-    print("  * %s %s" % (issue, summary))
+    issue_info = jira_issues_summary[issue]
+    print("  * %s (%s) %s" % (issue, issue_info.status, issue_info.summary))
     if issue in jira_issues_git_hashes:
         for hash in jira_issues_git_hashes[issue]:
             print("    * %s %s" % (hash, git_hash_log[hash]))
