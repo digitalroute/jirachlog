@@ -6,84 +6,84 @@ import subprocess
 import re
 from jira import JIRA
 
-jiraUsername = os.environ['JIRA_USERNAME']
-jiraPassword = os.environ['JIRA_PASSWORD']
-jiraServer = os.environ['JIRA_SERVER']
+jira_username = os.environ['JIRA_USERNAME']
+jira_password = os.environ['JIRA_PASSWORD']
+jira_server = os.environ['JIRA_SERVER']
 
 if (len(sys.argv) < 2):
     print("Usage: %s <revision-range>" % sys.argv[0])
     sys.exit(1)
 
-gitRevisionRange = sys.argv[1]
+git_revision_range = sys.argv[1]
 
-gitCwd = os.getcwd()
+git_cwd = os.getcwd()
 if len(sys.argv) > 2 and sys.argv[2]:
-    gitCwd = sys.argv[2]
+    git_cwd = sys.argv[2]
 
-gitLogPattern = r"(.*)\s(DAZ-\d+):\s?(.*)"
+git_log_pattern = r"(.*)\s(DAZ-\d+):\s?(.*)"
 
-jira = JIRA(basic_auth=(jiraUsername, jiraPassword), options={'server': jiraServer})
+jira = JIRA(basic_auth=(jira_username, jira_password), options={'server': jira_server})
 
 # A dictionary of jira issues -> array of git hashes
-jiraIssuesGitHashes = dict()
+jira_issues_git_hashes = dict()
 
  # these are ALL jira issues we've fetched which includes issues and subtasks
-jiraIssuesSummary = dict()
+jira_issues_summary = dict()
 
 # Dictionary of git hash -> log message
-gitHashLog = dict()
+git_hash_log = dict()
 
 # Jira issues parents pointing to childs
-jiraIssuesParents = dict()
+jira_issues_parents = dict()
 
-cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', gitRevisionRange], cwd=gitCwd, stdout=subprocess.PIPE)
+cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', git_revision_range], cwd=git_cwd, stdout=subprocess.PIPE)
 for line in cmd.stdout:
-    match = re.search(gitLogPattern, str(line.decode('utf-8').rstrip()))
+    match = re.search(git_log_pattern, str(line.decode('utf-8').rstrip()))
     if match:
-        matchedHash = match.group(1)
-        matchedIssue = match.group(2)
-        matchedLog = match.group(3)
+        marched_hash = match.group(1)
+        matched_issue = match.group(2)
+        matched_log = match.group(3)
 
-        gitHashLog[matchedHash] = matchedLog
+        git_hash_log[marched_hash] = matched_log
 
-        if matchedIssue not in jiraIssuesGitHashes:
-            jiraIssuesGitHashes[matchedIssue] = []
-        jiraIssuesGitHashes[matchedIssue].append(matchedHash)
+        if matched_issue not in jira_issues_git_hashes:
+            jira_issues_git_hashes[matched_issue] = []
+        jira_issues_git_hashes[matched_issue].append(marched_hash)
 
-        if matchedIssue not in jiraIssuesSummary:
-            issue = jira.issue(matchedIssue)
+        if matched_issue not in jira_issues_summary:
+            issue = jira.issue(matched_issue)
             if hasattr(issue, 'fields'):
                 summary = issue.fields.summary
-                jiraIssuesSummary[matchedIssue] = summary
+                jira_issues_summary[matched_issue] = summary
                 if hasattr(issue.fields, 'parent'):
                     parentIssue = jira.issue(issue.fields.parent)
                     if hasattr(parentIssue, 'fields'):
                         summary = parentIssue.fields.summary
-                        jiraIssuesSummary[parentIssue.key] = summary
-                        if parentIssue.key not in jiraIssuesParents:
-                            jiraIssuesParents[parentIssue.key] = []
-                        jiraIssuesParents[parentIssue.key].append(matchedIssue)
+                        jira_issues_summary[parentIssue.key] = summary
+                        if parentIssue.key not in jira_issues_parents:
+                            jira_issues_parents[parentIssue.key] = []
+                        jira_issues_parents[parentIssue.key].append(matched_issue)
                 else:
-                    jiraIssuesParents[matchedIssue] = []
+                    jira_issues_parents[matched_issue] = []
 
-def printIssue(issue):
-    summary = jiraIssuesSummary[issue]
+def print_issue(issue):
+    summary = jira_issues_summary[issue]
     print("* %s %s" % (issue, summary))
-    if issue in jiraIssuesGitHashes:
-        for hash in jiraIssuesGitHashes[issue]:
-            print("  * %s %s" % (hash, gitHashLog[hash]))
+    if issue in jira_issues_git_hashes:
+        for hash in jira_issues_git_hashes[issue]:
+            print("  * %s %s" % (hash, git_hash_log[hash]))
     return
 
-def printSubIssue(issue):
-    summary = jiraIssuesSummary[issue]
+def print_sub_issue(issue):
+    summary = jira_issues_summary[issue]
     print("  * %s %s" % (issue, summary))
-    if issue in jiraIssuesGitHashes:
-        for hash in jiraIssuesGitHashes[issue]:
-            print("    * %s %s" % (hash, gitHashLog[hash]))
+    if issue in jira_issues_git_hashes:
+        for hash in jira_issues_git_hashes[issue]:
+            print("    * %s %s" % (hash, git_hash_log[hash]))
     return
 
-for issue in sorted(jiraIssuesParents):
-    printIssue(issue)
-    for subIssue in sorted(jiraIssuesParents[issue]):
-        printSubIssue(subIssue)
+for issue in sorted(jira_issues_parents):
+    print_issue(issue)
+    for subIssue in sorted(jira_issues_parents[issue]):
+        print_sub_issue(subIssue)
 
