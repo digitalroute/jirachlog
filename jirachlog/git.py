@@ -23,15 +23,15 @@ def parse(config):
     for line in cmd.stdout:
         match = re.search(config.git_log_pattern, str(line.decode('utf-8').rstrip()))
         if match:
-            marched_hash = match.group(1)
+            matched_hash = match.group(1)
             matched_issue = match.group(2)
             matched_log = match.group(3)
 
-            git_hash_log[marched_hash] = matched_log
+            git_hash_log[matched_hash] = matched_log
 
             if matched_issue not in jira_issues_git_hashes:
                 jira_issues_git_hashes[matched_issue] = []
-            jira_issues_git_hashes[matched_issue].append(marched_hash)
+            jira_issues_git_hashes[matched_issue].append(matched_hash)
 
             if matched_issue not in jira_issues_summary:
                 issue = jira.issue(matched_issue)
