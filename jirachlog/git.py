@@ -38,11 +38,17 @@ def parse(config):
 
     cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', config.git_revision_range], cwd=config.git_cwd, stdout=subprocess.PIPE)
     for line in cmd.stdout:
-        match = re.search(config.git_log_pattern, str(line.decode('utf-8').rstrip()))
+        match = re.search(config.git_log_pattern_conventional, str(line.decode('utf-8').rstrip()))
+        is_conventional = false
+        if match:
+            is_conventional = true
+        else:
+            match = re.search(config.git_log_pattern, str(line.decode('utf-8').rstrip()))
+
         if match:
             matched_hash = match.group(1)
-            matched_issue = match.group(2)
-            matched_log = match.group(3)
+            matched_issue = match.group(3) if is_conventional else match.group(2)
+            matched_log = match.group(4) if is_conventional else match.group(3)
 
             git_hash_log[matched_hash] = matched_log
 
