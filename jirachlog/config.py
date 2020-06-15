@@ -9,6 +9,7 @@ class Config:
     git_revision_range = None
     git_cwd = None
     git_log_pattern = r"(.*)\s(DAZ-\d+):\s?(.*)"
+    git_log_pattern_conventional = r"(.*)\s(\w+):\s(DAZ-\d+)\s?(.*)"
 
     def __init__(self):
         if "JIRA_USERNAME" in os.environ and os.environ['JIRA_USERNAME']:
