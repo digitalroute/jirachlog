@@ -39,9 +39,9 @@ def parse(config):
     cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', config.git_revision_range], cwd=config.git_cwd, stdout=subprocess.PIPE)
     for line in cmd.stdout:
         match = re.search(config.git_log_pattern_conventional, str(line.decode('utf-8').rstrip()))
-        is_conventional = false
+        is_conventional = False
         if match:
-            is_conventional = true
+            is_conventional = True
         else:
             match = re.search(config.git_log_pattern, str(line.decode('utf-8').rstrip()))
 
