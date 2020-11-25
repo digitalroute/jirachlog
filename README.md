@@ -24,7 +24,7 @@ Create and activate virtual environment:
 
 Test the binary: (you can use your own Jira user)
 
-    JIRA_SERVER="https://jira.digitalroute.com/" JIRA_USERNAME=xxxx JIRA_PASSWORD=yyyy ./bin/jirachlog 4f539cd..a365cf5 /Users/marcusj/code/dazzlerjs/admin-app
+    PYTHONPATH=. JIRA_SERVER="https://jira.digitalroute.com/" JIRA_USERNAME=xxxx JIRA_PASSWORD=yyyy ./bin/jirachlog v1.5.0..v1.6.0 "Release 175 - Stream Linking" /Users/marcusj/code/dazzlerjs/dazzlerjs-api
 
 You can test the module by installing it locally:
 
