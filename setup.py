@@ -17,6 +17,6 @@ setup(name='jirachlog',
     scripts=['bin/jirachlog'],
     zip_safe=False,
     install_requires=[
-        'jira>=2.0.0'
+        'jira>=3.0.0'
     ],
 )
