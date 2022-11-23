@@ -34,7 +34,8 @@ git_hash_log = dict()
 jira_issues_parents = dict()
 
 def parse(config):
-    jira = JIRA(basic_auth=(config.jira_username, config.jira_password), options={'server': config.jira_server})
+    # JIRA has deprecated basic auth, hence updating to follow latest syntax from here: https://jira.readthedocs.io/examples.html#username-api-token
+    jira = JIRA(config.jira_server, basic_auth=(config.jira_username, config.jira_password))
 
     cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', config.git_revision_range], cwd=config.git_cwd, stdout=subprocess.PIPE)
     for line in cmd.stdout:
@@ -61,12 +62,12 @@ def parse(config):
                 if hasattr(issue, 'fields'):
                     jira_issues_summary[matched_issue] = IssueInfo(matched_issue, issue.fields.summary, issue.fields.status.name, match_version(config.release, issue))
                     if hasattr(issue.fields, 'parent'):
-                        parentIssue = jira.issue(issue.fields.parent)
-                        if hasattr(parentIssue, 'fields'):
-                            jira_issues_summary[parentIssue.key] = IssueInfo(matched_issue, parentIssue.fields.summary, parentIssue.fields.status.name, match_version(config.release, issue))
-                            if parentIssue.key not in jira_issues_parents:
-                                jira_issues_parents[parentIssue.key] = []
-                            jira_issues_parents[parentIssue.key].append(matched_issue)
+                        parent_issue = jira.issue(issue.fields.parent)
+                        if hasattr(parent_issue, 'fields'):
+                            jira_issues_summary[parent_issue.key] = IssueInfo(matched_issue, parent_issue.fields.summary, parent_issue.fields.status.name, match_version(config.release, issue))
+                            if parent_issue.key not in jira_issues_parents:
+                                jira_issues_parents[parent_issue.key] = []
+                            jira_issues_parents[parent_issue.key].append(matched_issue)
                     else:
                         jira_issues_parents[matched_issue] = []
 
@@ -83,50 +84,48 @@ def match_version(release, issue):
                 return True
     return False
 
-def print_issue(buffer, issue):
+def print_issue(buffer_input, issue):
     issue_info = jira_issues_summary[issue]
-    buffer.write("* %s (%s) %s\n" % (issue, issue_info.get_status(), issue_info.summary))
+    buffer_input.write("* %s (%s) %s\n" % (issue, issue_info.get_status(), issue_info.summary))
     if issue in jira_issues_git_hashes:
         for hash in jira_issues_git_hashes[issue]:
-            buffer.write("  * %s %s\n" % (hash, git_hash_log[hash]))
-    return
+            buffer_input.write("  * %s %s\n" % (hash, git_hash_log[hash]))
 
-def print_sub_issue(buffer, issue):
+def print_sub_issue(buffer_input, issue):
     issue_info = jira_issues_summary[issue]
-    buffer.write("  * %s (%s) %s\n" % (issue, issue_info.get_status(), issue_info.summary))
+    buffer_input.write("  * %s (%s) %s\n" % (issue, issue_info.get_status(), issue_info.summary))
     if issue in jira_issues_git_hashes:
         for hash in jira_issues_git_hashes[issue]:
-            buffer.write("    * %s %s\n" % (hash, git_hash_log[hash]))
-    return
+            buffer_input.write("    * %s %s\n" % (hash, git_hash_log[hash]))
 
 def print_issues(config):
-    buffer = StringIO()
+    buffer_input = StringIO()
 
     for issue in sorted(jira_issues_parents):
         issue_info = jira_issues_summary[issue]
         if issue_info.part_of_release:
-            print_issue(buffer, issue)
-            for subIssue in sorted(jira_issues_parents[issue]):
-                print_sub_issue(buffer, subIssue)
+            print_issue(buffer_input, issue)
+            for sub_issue in sorted(jira_issues_parents[issue]):
+                print_sub_issue(buffer_input, sub_issue)
 
-    if buffer.getvalue() != "":
+    if buffer_input.getvalue() != "":
         print("### %s" % config.release)
         print()
-        print(buffer.getvalue())
+        print(buffer_input.getvalue())
 
-    buffer = StringIO()
+    buffer_input = StringIO()
 
     for issue in sorted(jira_issues_parents):
         issue_info = jira_issues_summary[issue]
         if not issue_info.part_of_release:
-            print_issue(buffer, issue)
-            for subIssue in sorted(jira_issues_parents[issue]):
-                print_sub_issue(buffer, subIssue)
+            print_issue(buffer_input, issue)
+            for sub_issue in sorted(jira_issues_parents[issue]):
+                print_sub_issue(buffer_input, sub_issue)
 
-    if buffer.getvalue() != "":
+    if buffer_input.getvalue() != "":
         print("### Not part of release")
         print()
-        print(buffer.getvalue())
+        print(buffer_input.getvalue())
 
 def git_log(git_revision_range, cwd):
     cmd = subprocess.Popen(['git', 'log', '--oneline', '--no-color', git_revision_range], cwd=cwd, stdout=subprocess.PIPE)
